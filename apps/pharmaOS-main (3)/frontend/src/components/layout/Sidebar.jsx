@@ -1,6 +1,11 @@
+// Phase 4 - Navigation
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+// Phase 4 addition
+import { usePermissions } from '../../hooks/usePermissions'
+// Phase 4 addition
+import { PERMISSIONS } from '../../config/permissions'
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -22,69 +27,71 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, requiredPermission: PERMISSIONS.VIEW_DASHBOARD },
   {
     label: 'Sales',
     icon: ShoppingCart,
     subItems: [
-      { to: '/pos', label: 'Pharmacist POS' },
-      { to: '/sales/new', label: 'Sale New' },
-      { to: '/sales', label: 'Sale List' },
+      { to: '/pos', label: 'Pharmacist POS', requiredPermission: PERMISSIONS.ACCESS_POS },
+      { to: '/sales/new', label: 'Sale New', requiredPermission: PERMISSIONS.ACCESS_POS },
+      { to: '/sales', label: 'Sale List', requiredPermission: PERMISSIONS.VIEW_ORDERS },
     ]
   },
   {
     label: 'Purchases',
     icon: Truck,
     subItems: [
-      { to: '/purchases/new', label: 'Purchase New' },
-      { to: '/purchases', label: 'Purchase List' },
+      { to: '/purchases/new', label: 'Purchase New', requiredPermission: PERMISSIONS.VIEW_PURCHASES },
+      { to: '/purchases', label: 'Purchase List', requiredPermission: PERMISSIONS.VIEW_PURCHASES },
     ]
   },
   {
     label: 'Stock List',
     icon: Receipt,
     subItems: [
-      { to: '/stock/current', label: 'Current Stock' },
-      { to: '/stock/expired', label: 'Expired Stock' },
+      { to: '/stock/current', label: 'Current Stock', requiredPermission: PERMISSIONS.VIEW_STOCK },
+      { to: '/stock/expired', label: 'Expired Stock', requiredPermission: PERMISSIONS.VIEW_STOCK },
     ]
   },
   {
     label: 'Products',
     icon: Package,
     subItems: [
-      { to: '/products', label: 'Add Product' },
-      { to: '/products', label: 'All Product' },
-      { to: '/products/barcodes', label: 'Print Barcode' },
+      { to: '/products', label: 'Add Product', requiredPermission: PERMISSIONS.EDIT_PRODUCTS },
+      { to: '/products', label: 'All Product', requiredPermission: PERMISSIONS.VIEW_PRODUCTS },
+      { to: '/products/barcodes', label: 'Print Barcode', requiredPermission: PERMISSIONS.VIEW_PRODUCTS },
     ]
   },
   {
     label: 'Customer',
     icon: Users,
     subItems: [
-      { to: '/customers/new', label: 'Add Customer' },
-      { to: '/customers', label: 'All Customer' },
+      { to: '/customers/new', label: 'Add Customer', requiredPermission: PERMISSIONS.EDIT_CUSTOMERS },
+      { to: '/customers', label: 'All Customer', requiredPermission: PERMISSIONS.VIEW_CUSTOMERS },
     ]
   },
   {
     label: 'Supplier',
     icon: UserSquare2,
     subItems: [
-      { to: '/suppliers/new', label: 'Add Supplier' },
-      { to: '/suppliers', label: 'All Supplier' },
+      { to: '/suppliers/new', label: 'Add Supplier', requiredPermission: PERMISSIONS.EDIT_SUPPLIERS },
+      { to: '/suppliers', label: 'All Supplier', requiredPermission: PERMISSIONS.VIEW_SUPPLIERS },
     ]
   },
-  { to: '/orders', label: 'Online Orders', icon: Truck },
-  { to: '/prescriptions', label: 'Prescriptions', icon: FileText },
-  { to: '/incomes', label: 'Incomes', icon: TrendingUp },
-  { to: '/expenses', label: 'Expenses', icon: TrendingDown },
-  { to: '/tax', label: 'Tax', icon: Receipt },
-  { to: '/due-list', label: 'Due List', icon: Clock },
-  { to: '/reports', label: 'Reports', icon: BarChart3, adminOnly: true },
-  { to: '/settings', label: 'Manage Settings', icon: Settings },
+  { to: '/orders', label: 'Online Orders', icon: Truck, requiredPermission: PERMISSIONS.VIEW_ORDERS },
+  { to: '/prescriptions', label: 'Prescriptions', icon: FileText, requiredPermission: PERMISSIONS.VIEW_PRESCRIPTIONS },
+  { to: '/incomes', label: 'Incomes', icon: TrendingUp, requiredPermission: PERMISSIONS.VIEW_FINANCIALS },
+  { to: '/expenses', label: 'Expenses', icon: TrendingDown, requiredPermission: PERMISSIONS.VIEW_FINANCIALS },
+  { to: '/tax', label: 'Tax', icon: Receipt, requiredPermission: PERMISSIONS.VIEW_FINANCIALS },
+  { to: '/due-list', label: 'Due List', icon: Clock, requiredPermission: PERMISSIONS.VIEW_FINANCIALS },
+  { to: '/reports', label: 'Reports', icon: BarChart3, requiredPermission: PERMISSIONS.VIEW_REPORTS }, // Phase 4 - removed adminOnly
+  { to: '/settings', label: 'Manage Settings', icon: Settings, requiredPermission: PERMISSIONS.VIEW_SETTINGS },
 ]
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth()
+  // Phase 4 addition
+  const { hasPermission } = usePermissions()
   const [expandedMenus, setExpandedMenus] = useState({})
   const [isHovered, setIsHovered] = useState(false)
 
@@ -141,7 +148,8 @@ export default function Sidebar({ isOpen, onClose }) {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
             {navItems
-              .filter((item) => !item.adminOnly || user?.userType === 'ADMIN' || user?.userType === 'SUPER_ADMIN')
+              // Phase 4 - removed adminOnly, added permission-based filtering
+              .filter((item) => !item.requiredPermission || hasPermission(item.requiredPermission))
               .map((item) => {
                 const Icon = item.icon
                 const isExpanded = expandedMenus[item.label]
@@ -245,3 +253,4 @@ export default function Sidebar({ isOpen, onClose }) {
   )
 }
 
+// TODO: Phase 5
