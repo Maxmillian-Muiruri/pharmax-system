@@ -172,7 +172,9 @@ export default function Sidebar({ isOpen, onClose }) {
                       </button>
                       {isExpanded && isEffectiveOpen && (
                         <div className="space-y-1">
-                          {item.subItems.map(subItem => (
+                          {item.subItems
+                            .filter(subItem => !subItem.requiredPermission || hasPermission(subItem.requiredPermission))
+                            .map(subItem => (
                             <NavLink
                               key={subItem.to}
                               to={subItem.to}

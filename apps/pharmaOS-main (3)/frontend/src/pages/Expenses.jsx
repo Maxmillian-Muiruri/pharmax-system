@@ -1,3 +1,4 @@
+// Phase 6 - Page Permissions
 import { useState, useCallback } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { useExpenses, useExpenseSummary } from '../hooks/useExpenses'
@@ -7,6 +8,8 @@ import PageWrapper from '../components/layout/PageWrapper'
 import Card from '../components/ui/Card'
 import { formatCurrency } from '../utils/formatCurrency'
 import { formatDate } from '../utils/formatDate'
+import { usePermissions } from '../hooks/usePermissions' // Phase 6 addition
+import { PERMISSIONS } from '../config/permissions' // Phase 6 addition
 
 export default function Expenses() {
   const { expenses, loading, error, refetch } = useExpenses()
@@ -16,6 +19,7 @@ export default function Expenses() {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({ category: '', amount: '', date: new Date().toISOString().split('T')[0], notes: '' })
   const [saving, setSaving] = useState(false)
+  const { hasPermission } = usePermissions() // Phase 6 addition
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
@@ -70,9 +74,11 @@ export default function Expenses() {
         subtitle="Track your pharmacy expenses"
         className="border-none shadow-sm mb-6"
         action={
-          <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors">
-            <Plus size={16} /> Add Expense
-          </button>
+          hasPermission(PERMISSIONS.EDIT_FINANCIALS) && ( // Phase 6 addition
+            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors">
+              <Plus size={16} /> Add Expense
+            </button>
+          ) // Phase 6 addition
         }
       >
         <div className="mb-6 flex items-center gap-4">

@@ -1,3 +1,4 @@
+// Phase 6 - Page Permissions
 import { useState, useCallback } from 'react'
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react'
 import { useCustomers } from '../hooks/useCustomers'
@@ -5,6 +6,8 @@ import { customersApi } from '../services/api'
 import PageWrapper from '../components/layout/PageWrapper'
 import Card from '../components/ui/Card'
 import { formatCurrency } from '../utils/formatCurrency'
+import { usePermissions } from '../hooks/usePermissions' // Phase 6 addition
+import { PERMISSIONS } from '../config/permissions' // Phase 6 addition
 
 export default function Customers() {
   const { customers, loading, error, refetch } = useCustomers()
@@ -13,6 +16,7 @@ export default function Customers() {
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' })
   const [saving, setSaving] = useState(false)
   const [editId, setEditId] = useState(null)
+  const { hasPermission } = usePermissions() // Phase 6 addition
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
@@ -58,12 +62,14 @@ export default function Customers() {
         subtitle="Manage your customers and their balances"
         className="border-none shadow-sm mb-6"
         action={
-          <button
-            onClick={() => { setShowForm(true); setEditId(null); setFormData({ name: '', phone: '', email: '', address: '' }) }}
-            className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors"
-          >
-            <Plus size={16} /> Add New
-          </button>
+          hasPermission(PERMISSIONS.EDIT_CUSTOMERS) && ( // Phase 6 addition
+            <button
+              onClick={() => { setShowForm(true); setEditId(null); setFormData({ name: '', phone: '', email: '', address: '' }) }}
+              className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors"
+            >
+              <Plus size={16} /> Add New
+            </button>
+          ) // Phase 6 addition
         }
       >
         {/* Search */}
@@ -127,8 +133,12 @@ export default function Customers() {
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditId(c.id); setFormData({ name: c.name, phone: c.phone||'', email: c.email||'', address: c.address||'' }); setShowForm(true) }} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
-                          <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                          {hasPermission(PERMISSIONS.EDIT_CUSTOMERS) && ( // Phase 6 addition
+                            <button onClick={() => { setEditId(c.id); setFormData({ name: c.name, phone: c.phone||'', email: c.email||'', address: c.address||'' }); setShowForm(true) }} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
+                          )} {/* Phase 6 addition */}
+                          {hasPermission(PERMISSIONS.EDIT_CUSTOMERS) && ( // Phase 6 addition
+                            <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                          )} {/* Phase 6 addition */}
                         </div>
                       </td>
                     </tr>
@@ -155,8 +165,12 @@ export default function Customers() {
                   <div className="flex items-center justify-between mt-2">
                     <p className="text-xs text-gray-500 truncate flex-1">{c.email || '—'}</p>
                     <div className="flex items-center gap-2 ml-2 shrink-0">
-                      <button onClick={() => { setEditId(c.id); setFormData({ name: c.name, phone: c.phone||'', email: c.email||'', address: c.address||'' }); setShowForm(true) }} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
-                      <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                      {hasPermission(PERMISSIONS.EDIT_CUSTOMERS) && ( // Phase 6 addition
+                        <button onClick={() => { setEditId(c.id); setFormData({ name: c.name, phone: c.phone||'', email: c.email||'', address: c.address||'' }); setShowForm(true) }} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
+                      )} {/* Phase 6 addition */}
+                      {hasPermission(PERMISSIONS.EDIT_CUSTOMERS) && ( // Phase 6 addition
+                        <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                      )} {/* Phase 6 addition */}
                     </div>
                   </div>
                 </div>
