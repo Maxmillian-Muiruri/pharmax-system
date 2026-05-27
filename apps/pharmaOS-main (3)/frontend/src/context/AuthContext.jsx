@@ -1,7 +1,11 @@
+// Phase 2 - Auth Enhancement
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { useToast } from './ToastContext'
+// Phase 2 addition
+import { ROLE_PERMISSIONS, ROLE_DASHBOARD_ROUTES } from '../config/permissions'; 
+import { PermissionsProvider } from './PermissionsContext'; 
 
 const AuthContext = createContext()
 
@@ -27,6 +31,8 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'))
   const [loading, setLoading] = useState(true)
+  // Phase 2 addition
+  const [permissions, setPermissions] = useState([]); 
   const navigate = useNavigate()
   const toast = useToast()
   const refreshPromiseRef = useRef(null)
@@ -54,34 +60,34 @@ export function AuthProvider({ children }) {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current
     }
-
+    
     refreshPromiseRef.current = (async () => {
       try {
         const storedRefreshToken = localStorage.getItem('refreshToken')
         if (!storedRefreshToken) {
           throw new Error('No refresh token available')
         }
-
+        
         const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken: storedRefreshToken }),
         })
-
+        
         if (!response.ok) {
           const error = await response.json().catch(() => ({ error: 'Refresh failed' }))
           throw new Error(error.message || error.error || 'Refresh failed')
         }
-
+        
         const result = await response.json()
         const { token: newToken, refreshToken: newRefreshToken } = result.data
-
+        
         localStorage.setItem('token', newToken)
         localStorage.setItem('refreshToken', newRefreshToken)
         setToken(newToken)
         setRefreshToken(newRefreshToken)
         resetActivityTimer()
-
+        
         return newToken
       } catch (error) {
         // Clear all session data
@@ -96,21 +102,21 @@ export function AuthProvider({ children }) {
         refreshPromiseRef.current = null
       }
     })()
-
+    
     return refreshPromiseRef.current
   }, [])
 
   // Proactive token refresh before expiry (check every 5 minutes)
   useEffect(() => {
     if (!token) return
-
+    
     const checkAndRefresh = async () => {
       const decoded = decodeToken(token)
       if (!decoded || !decoded.exp) return
-
+      
       const currentTime = Date.now() / 1000
       const timeUntilExpiry = decoded.exp - currentTime
-
+      
       // Refresh if less than 5 minutes remaining
       if (timeUntilExpiry < 300 && timeUntilExpiry > 0) {
         try {
@@ -129,13 +135,13 @@ export function AuthProvider({ children }) {
         }
       }
     }
-
+    
     // Check immediately on mount
     checkAndRefresh()
-
+    
     // Then check every 5 minutes
     const interval = setInterval(checkAndRefresh, 5 * 60 * 1000)
-
+    
     return () => clearInterval(interval)
   }, [token, refreshTokens, navigate, toast])
 
@@ -172,7 +178,7 @@ export function AuthProvider({ children }) {
         navigate('/login', { replace: true })
       }
     }
-
+    
     window.addEventListener('storage', handleStorageChange)
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [navigate])
@@ -184,10 +190,12 @@ export function AuthProvider({ children }) {
         setLoading(false)
         return
       }
-
+      
       try {
         const res = await api.get('/auth/me')
         setUser(res.data)
+        // Phase 2 addition
+        setPermissions(ROLE_PERMISSIONS[res.data.userType] || []); 
         resetActivityTimer()
       } catch (err) {
         // If verification fails, the API interceptor will handle refresh
@@ -196,11 +204,13 @@ export function AuthProvider({ children }) {
         setToken(null)
         setRefreshToken(null)
         setUser(null)
+        // Phase 2 addition
+        setPermissions([]); 
       } finally {
         setLoading(false)
       }
     }
-
+    
     verifyUser()
   }, [token])
 
@@ -208,15 +218,17 @@ export function AuthProvider({ children }) {
     try {
       const res = await api.post('/auth/login', { email, password })
       const { user: userData, token: jwt, refreshToken: refreshJwt } = res.data
-
+      
       // Synchronously set local storage BEFORE navigating to prevent race conditions
       localStorage.setItem('token', jwt)
       localStorage.setItem('refreshToken', refreshJwt)
       api.defaults.headers.common['Authorization'] = `Bearer ${jwt}`
-
+      
       setToken(jwt)
       setRefreshToken(refreshJwt)
       setUser(userData)
+      // Phase 2 addition
+      setPermissions(ROLE_PERMISSIONS[userData.userType] || []); 
       navigate('/', { replace: true })
       toast.success(`Welcome back, ${userData.name || userData.email}!`)
       return true
@@ -234,23 +246,30 @@ export function AuthProvider({ children }) {
     setToken(null)
     setRefreshToken(null)
     setUser(null)
+    // Phase 2 addition
+    setPermissions([]); 
     navigate('/login', { replace: true })
     toast.info('Logged out successfully')
   }, [navigate, toast])
 
+  // Phase 2 addition
   const value = {
     user,
     token,
     refreshToken,
+    permissions,
     isAuthenticated: !!token,
     loading,
     login,
     logout,
   }
+  // End Phase 2 addition
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      <PermissionsProvider userRole={user?.userType}>
+        {!loading && children}
+      </PermissionsProvider>
     </AuthContext.Provider>
   )
 }
@@ -262,3 +281,5 @@ export function useAuth() {
   }
   return context
 }
+
+// TODO: Phase 3
