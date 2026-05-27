@@ -9,6 +9,14 @@ import { PERMISSIONS } from './config/permissions'
 import { ROUTES } from './config/routes'
 
 import Dashboard from './pages/Dashboard'
+// Phase 5 - Role Dashboards
+import AdminDashboard from './features/dashboard/AdminDashboard'
+import ManagerDashboard from './features/dashboard/ManagerDashboard'
+import PharmacistDashboard from './features/dashboard/PharmacistDashboard'
+import FinanceDashboard from './features/dashboard/FinanceDashboard'
+import DispatchDashboard from './features/dashboard/DispatchDashboard'
+import RiderDashboard from './features/dashboard/RiderDashboard'
+import ReceivingDashboard from './features/dashboard/ReceivingDashboard'
 import Login from './pages/Login'
 import POSView from './pages/Sales/POSView'
 import PharmacistPOS from './pages/Sales/PharmacistPOS'
@@ -52,6 +60,15 @@ function App() {
 
             {/* Role-based redirect for root path */}
             <Route path="/" element={<RoleBasedRedirect />} />
+
+            {/* Phase 5 - Role Dashboards */}
+            <Route path="/dashboard" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><AdminDashboard /></PermissionGuard>} />
+            <Route path="/dashboard/manager" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><ManagerDashboard /></PermissionGuard>} />
+            <Route path="/dashboard/pharmacist" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><PharmacistDashboard /></PermissionGuard>} />
+            <Route path="/dashboard/finance" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><FinanceDashboard /></PermissionGuard>} />
+            <Route path="/dashboard/dispatch" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><DispatchDashboard /></PermissionGuard>} />
+            <Route path="/dashboard/rider" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><RiderDashboard /></PermissionGuard>} />
+            <Route path="/dashboard/receiving" element={<PermissionGuard requiredPermission={PERMISSIONS.VIEW_DASHBOARD}><ReceivingDashboard /></PermissionGuard>} />
 
             {/* Sales */}
             <Route path="/sales/new" element={<PermissionGuard requiredPermission={PERMISSIONS.ACCESS_POS}><POSView /></PermissionGuard>} />
