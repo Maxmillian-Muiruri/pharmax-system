@@ -148,9 +148,14 @@ export default function Sidebar({ isOpen, onClose }) {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
             {navItems
-              // Phase 4 - removed adminOnly, added permission-based filtering
-              .filter((item) => !item.requiredPermission || hasPermission(item.requiredPermission))
-              .map((item) => {
+               // Phase 4 - removed adminOnly, added permission-based filtering
+               .filter(item => {
+                 if (!item.subItems) {
+                   return !item.requiredPermission || hasPermission(item.requiredPermission)
+                 }
+                 return item.subItems.some(sub => !sub.requiredPermission || hasPermission(sub.requiredPermission))
+               })
+               .map((item) => {
                 const Icon = item.icon
                 const isExpanded = expandedMenus[item.label]
 
@@ -173,8 +178,8 @@ export default function Sidebar({ isOpen, onClose }) {
                       {isExpanded && isEffectiveOpen && (
                         <div className="space-y-1">
                           {item.subItems
-                            .filter(subItem => !subItem.requiredPermission || hasPermission(subItem.requiredPermission))
-                            .map(subItem => (
+  .filter(subItem => !subItem.requiredPermission || hasPermission(subItem.requiredPermission))
+  .map(subItem => (
                             <NavLink
                               key={subItem.to}
                               to={subItem.to}
