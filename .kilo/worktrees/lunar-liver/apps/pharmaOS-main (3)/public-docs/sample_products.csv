@@ -1,0 +1,9 @@
+name,quantity,unitPrice,expiryDate,category,supplier
+Vitamin C 1000mg,150,15.50,2027-12-01,Vitamins,HealthCorp
+Panadol Extra,300,5.00,2026-08-15,Painkillers,GlaxoSmithKline
+Amoxicillin 500mg,45,25.00,2025-11-20,Antibiotics,PharmaPlus
+Loratadine 10mg,120,12.75,2027-05-10,Antihistamines,AllergyMeds Inc
+Omeprazole 20mg,80,22.00,2026-02-28,Gastrointestinal,StomachCare
+Ibuprofen 400mg,200,8.50,2026-10-15,Painkillers,HealthCorp
+Cetirizine 10mg,0,10.00,2027-01-20,Antihistamines,AllergyMeds Inc
+Multivitamin Gummies,55,18.00,2024-12-01,Vitamins,HealthCorp

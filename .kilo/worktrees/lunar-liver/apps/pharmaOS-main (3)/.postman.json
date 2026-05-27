@@ -1,0 +1,6 @@
+{
+  "workspaceId": null,
+  "collectionId": null,
+  "environmentId": null,
+  "note": "Run the Postman hook after configuring your POSTMAN_API_KEY to auto-populate these IDs."
+}

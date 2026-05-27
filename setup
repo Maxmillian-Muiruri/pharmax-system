@@ -1,0 +1,82 @@
+#!/usr/bin/env sh
+
+set -eu
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+COMPOSE_FILE="$ROOT_DIR/compose.dev.yml"
+
+compose_cmd() {
+  if command -v docker >/dev/null 2>&1; then
+    if docker compose version >/dev/null 2>&1; then
+      docker compose "$@"
+      return
+    fi
+  fi
+
+  if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "$@"
+    return
+  fi
+
+  echo "Docker Compose not found. Install Docker Desktop or docker-compose."
+  exit 1
+}
+
+usage() {
+  echo "Usage: ./setup [up|down|restart|logs|ps|build|pull] [extra compose args]"
+  echo ""
+  echo "Examples:"
+  echo "  ./setup                 # build + start detached"
+  echo "  ./setup up -d           # start detached"
+  echo "  ./setup down -v         # stop and remove volumes"
+  echo "  ./setup logs -f backend # follow service logs"
+}
+
+if [ ! -f "$COMPOSE_FILE" ]; then
+  echo "Compose file not found: $COMPOSE_FILE"
+  exit 1
+fi
+
+ACTION="${1:-up}"
+if [ $# -gt 0 ]; then
+  shift
+fi
+
+case "$ACTION" in
+  up)
+    if [ $# -eq 0 ]; then
+      compose_cmd -f "$COMPOSE_FILE" up --build
+      compose_cmd -f "$COMPOSE_FILE" ps
+    else
+      compose_cmd -f "$COMPOSE_FILE" up "$@"
+    fi
+    ;;
+  down)
+    compose_cmd -f "$COMPOSE_FILE" down "$@"
+    ;;
+  restart)
+    compose_cmd -f "$COMPOSE_FILE" down
+    compose_cmd -f "$COMPOSE_FILE" up -d "$@"
+    ;;
+  logs)
+    compose_cmd -f "$COMPOSE_FILE" logs "$@"
+    ;;
+  ps)
+    compose_cmd -f "$COMPOSE_FILE" ps "$@"
+    ;;
+  build)
+    compose_cmd -f "$COMPOSE_FILE" build "$@"
+    ;;
+  pull)
+    compose_cmd -f "$COMPOSE_FILE" pull "$@"
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    echo "Unknown action: $ACTION"
+    echo ""
+    usage
+    exit 1
+    ;;
+esac

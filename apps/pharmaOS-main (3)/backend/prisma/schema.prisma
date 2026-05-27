@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?  @unique
+  address   String?
+  balance   Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id            String     @id @default(uuid())
+  name          String
+  phone         String?
+  contactPerson String?
+  email         String?    @unique
+  address       String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  products      Product[]
+  purchases     Purchase[]
+}
+
+model Product {
+  id            String         @id @default(uuid())
+  name          String
+  category      String?
+  quantity      Int            @default(0)
+  unitPrice     Decimal        @db.Decimal(10, 2)
+  expiryDate    DateTime       @db.Date
+  status        ProductStatus  @default(active)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  barcode       String?        @unique
+  batchNumber   String?
+  generic       String?
+  minimumStock  Int            @default(10)
+  purchasePrice Decimal?       @db.Decimal(10, 2)
+  supplierId    String?
+  alerts        Alert[]
+  cartItems     CartItem[]
+  orders        Order[]
+  prescriptions Prescription[]
+  supplier      Supplier?      @relation(fields: [supplierId], references: [id])
+  purchaseItems PurchaseItem[]
+  transactions  Transaction[]
+}
+
+model Order {
+  id                  String        @id @default(uuid())
+  customerName        String
+  customerPhone       String
+  productId           String?
+  quantity            Int
+  totalAmount         Decimal       @db.Decimal(10, 2)
+  status              OrderStatus   @default(pending)
+  notes               String?
+  createdAt           DateTime      @default(now())
+  amountDue           Decimal?      @db.Decimal(10, 2)
+  amountPaid          Decimal?      @db.Decimal(10, 2)
+  customerEmail       String?
+  customerId          String?
+  estimatedDelivery   String?
+  isPrescriptionOrder Boolean       @default(false)
+  orderNumber         String        @unique
+  paymentMethod       String?
+  paymentStatus       PaymentStatus @default(pending)
+  prescriptionId      String?
+  shippingAddress     Json?
+  transactionId       String?
+  updatedAt           DateTime      @updatedAt
+  userId              String?
+  product             Product?      @relation(fields: [productId], references: [id])
+  user                User?         @relation(fields: [userId], references: [id])
+  transaction         Transaction?
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model Transaction {
+  id        String          @id @default(uuid())
+  orderId   String?         @unique
+  productId String
+  type      TransactionType
+  quantity  Int
+  amount    Decimal         @db.Decimal(10, 2)
+  notes     String?
+  createdAt DateTime        @default(now())
+  order     Order?          @relation(fields: [orderId], references: [id])
+  product   Product         @relation(fields: [productId], references: [id])
+}
+
+model Alert {
+  id          String    @id @default(uuid())
+  productId   String
+  type        AlertType
+  message     String
+  isRead      Boolean   @default(false)
+  triggeredAt DateTime  @default(now())
+  product     Product   @relation(fields: [productId], references: [id])
+}
+
+model Purchase {
+  id           String         @id @default(uuid())
+  supplierId   String
+  invoiceNo    String?        @unique
+  purchaseDate DateTime       @db.Date
+  totalAmount  Decimal        @db.Decimal(10, 2)
+  notes        String?
+  createdAt    DateTime       @default(now())
+  supplier     Supplier       @relation(fields: [supplierId], references: [id])
+  items        PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(uuid())
+  purchaseId String
+  productId  String
+  quantity   Int
+  unitCost   Decimal  @db.Decimal(10, 2)
+  total      Decimal  @db.Decimal(10, 2)
+  product    Product  @relation(fields: [productId], references: [id])
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+}
+
+model Expense {
+  id        String   @id @default(uuid())
+  category  String
+  amount    Decimal  @db.Decimal(10, 2)
+  date      DateTime @db.Date
+  notes     String?
+  status    String   @default("completed")
+  createdAt DateTime @default(now())
+}
+
+model Income {
+  id        String   @id @default(uuid())
+  category  String
+  amount    Decimal  @db.Decimal(10, 2)
+  date      DateTime @db.Date
+  notes     String?
+  status    String   @default("completed")
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  name           String         @default("")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  address        String?
+  dateOfBirth    DateTime?
+  gender         String?
+  isActive       Boolean        @default(true)
+  password       String
+  phone          String?
+  profilePicture String?
+  userType       UserType       @default(ADMIN)
+  cartItems      CartItem[]
+  orders         Order[]
+  pharmacist     Pharmacist?
+  prescriptions  Prescription[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Pharmacist {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  licenseNumber String   @unique
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Prescription {
+  id             String             @id @default(uuid())
+  userId         String
+  prescriptionId String
+  patientName    String
+  phoneNumber    String
+  email          String
+  doctorName     String
+  hospitalName   String
+  address        String
+  notes          String?
+  files          Json
+  status         PrescriptionStatus @default(under_review)
+  estimatedPrice Decimal?           @db.Decimal(10, 2)
+  reviewNotes    String?
+  productId      String?
+  productQuantity Int              @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  user           User               @relation(fields: [userId], references: [id])
+  product        Product?           @relation(fields: [productId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum UserType {
+  SUPER_ADMIN
+  ADMIN
+  FINANCE
+  RECEIVING_BAY
+  MANAGER
+  DISPATCH
+  RIDER
+  PHARMACIST
+  CUSTOMER
+}
+
+enum ProductStatus {
+  active
+  expired
+  near_expiry
+  out_of_stock
+}
+
+enum OrderStatus {
+  pending
+  processing
+  out_for_delivery
+  completed
+  cancelled
+}
+
+enum TransactionType {
+  sale
+  restock
+  write_off
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+  failed
+  refunded
+}
+
+enum PrescriptionStatus {
+  under_review
+  available
+  out_of_stock
+  rejected
+  dispensed
+}
+
+enum AlertType {
+  expired
+  near_expiry
+  low_stock
+}
