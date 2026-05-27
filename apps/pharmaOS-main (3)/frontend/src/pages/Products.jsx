@@ -1,3 +1,4 @@
+// Phase 6 - Page Permissions
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
@@ -6,6 +7,8 @@ import { useToast } from '../context/ToastContext'
 import PageWrapper from '../components/layout/PageWrapper'
 import Card from '../components/ui/Card'
 import { formatCurrency } from '../utils/formatCurrency'
+import { usePermissions } from '../hooks/usePermissions' // Phase 6 addition
+import { PERMISSIONS } from '../config/permissions' // Phase 6 addition
 
 export default function Products() {
   const toast = useToast()
@@ -21,6 +24,7 @@ export default function Products() {
     unitPrice: 0, purchasePrice: 0, expiryDate: '', batchNumber: '', minimumStock: 10,
   })
   const [saving, setSaving] = useState(false)
+  const { hasPermission } = usePermissions() // Phase 6 addition
 
   // Sync search field when URL param changes (navbar search navigates here)
   useEffect(() => {
@@ -105,12 +109,14 @@ export default function Products() {
         subtitle="Complete inventory management"
         className="border-none shadow-sm mb-6"
         action={
-          <button
-            onClick={() => { setShowForm(true); setEditId(null); setFormData(emptyForm) }}
-            className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors"
-          >
-            <Plus size={16} /> Add New
-          </button>
+          hasPermission(PERMISSIONS.EDIT_PRODUCTS) && ( // Phase 6 addition
+            <button
+              onClick={() => { setShowForm(true); setEditId(null); setFormData(emptyForm) }}
+              className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors"
+            >
+              <Plus size={16} /> Add New
+            </button>
+          ) // Phase 6 addition
         }
       >
         {/* Search */}
@@ -184,8 +190,12 @@ export default function Products() {
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(p)} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
-                          <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                          {hasPermission(PERMISSIONS.EDIT_PRODUCTS) && ( // Phase 6 addition
+                            <button onClick={() => handleEdit(p)} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
+                          )} {/* Phase 6 addition */}
+                          {hasPermission(PERMISSIONS.DELETE_PRODUCTS) && ( // Phase 6 addition
+                            <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                          )} {/* Phase 6 addition */}
                         </div>
                       </td>
                     </tr>
@@ -211,8 +221,12 @@ export default function Products() {
                       <span>{p.expiryDate ? new Date(p.expiryDate).toLocaleDateString('en-KE', { month: 'short', year: 'numeric' }) : '—'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleEdit(p)} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                      {hasPermission(PERMISSIONS.EDIT_PRODUCTS) && ( // Phase 6 addition
+                        <button onClick={() => handleEdit(p)} className="p-1.5 text-gray-400 hover:text-forty-primary rounded transition-colors"><Edit2 size={14} /></button>
+                      )} {/* Phase 6 addition */}
+                      {hasPermission(PERMISSIONS.DELETE_PRODUCTS) && ( // Phase 6 addition
+                        <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"><Trash2 size={14} /></button>
+                      )} {/* Phase 6 addition */}
                     </div>
                   </div>
                 </div>

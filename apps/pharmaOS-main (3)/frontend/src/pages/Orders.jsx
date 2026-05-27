@@ -1,3 +1,4 @@
+// Phase 6 - Page Permissions
 import { useState } from 'react'
 import { ShoppingCart } from 'lucide-react'
 import PageWrapper from '../components/layout/PageWrapper'
@@ -15,6 +16,8 @@ import { useProducts } from '../hooks/useProducts'
 import { formatCurrency } from '../utils/formatCurrency'
 import { formatDate } from '../utils/formatDate'
 import { ordersApi } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions' // Phase 6 addition
+import { PERMISSIONS } from '../config/permissions' // Phase 6 addition
 
 const statusTabs = [
   { value: '', label: 'All' },
@@ -41,6 +44,7 @@ export default function Orders() {
   const [formErrors, setFormErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [processing, setProcessing] = useState({})
+  const { hasPermission } = usePermissions() // Phase 6 addition
 
   const { orders, loading, refetch } = useOrders({
     status: statusFilter || undefined,
@@ -110,7 +114,7 @@ export default function Orders() {
 
     switch (order.status) {
       case 'pending':
-        return (
+        return hasPermission(PERMISSIONS.PROCESS_ORDERS) && ( // Phase 6 addition
           <Button
             size="sm"
             onClick={(e) => { e.stopPropagation(); handleStatusUpdate(order.id, 'processing'); }}
@@ -118,31 +122,35 @@ export default function Orders() {
           >
             Start Processing
           </Button>
-        )
+        ) // Phase 6 addition
       case 'processing':
         return (
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={(e) => { e.stopPropagation(); handleStatusUpdate(order.id, 'out_for_delivery'); }}
-              loading={isProcessing}
-            >
-              Mark as Out for Delivery
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={(e) => { e.stopPropagation(); handleStatusUpdate(order.id, 'cancelled'); }}
-              loading={isProcessing}
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
+            {hasPermission(PERMISSIONS.PROCESS_ORDERS) && ( // Phase 6 addition
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={(e) => { e.stopPropagation(); handleStatusUpdate(order.id, 'out_for_delivery'); }}
+                loading={isProcessing}
+              >
+                Mark as Out for Delivery
+              </Button>
+            )} {/* Phase 6 addition */}
+            {hasPermission(PERMISSIONS.EDIT_ORDERS) && ( // Phase 6 addition
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={(e) => { e.stopPropagation(); handleStatusUpdate(order.id, 'cancelled'); }}
+                loading={isProcessing}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+            )} {/* Phase 6 addition */}
           </div>
         )
       case 'out_for_delivery':
-        return (
+        return hasPermission(PERMISSIONS.PROCESS_ORDERS) && ( // Phase 6 addition
           <Button
             size="sm"
             variant="primary"
@@ -151,7 +159,7 @@ export default function Orders() {
           >
             Mark as Delivered
           </Button>
-        );
+        ); // Phase 6 addition
       default:
         return <span className="text-gray-400 text-sm">—</span>
     }
@@ -198,9 +206,11 @@ export default function Orders() {
     <PageWrapper
       title="Orders"
       action={
-        <Button onClick={handleOpenModal} className="w-full sm:w-auto">
-          Create Order
-        </Button>
+        hasPermission(PERMISSIONS.EDIT_ORDERS) && ( // Phase 6 addition
+          <Button onClick={handleOpenModal} className="w-full sm:w-auto">
+            Create Order
+          </Button>
+        ) // Phase 6 addition
       }
     >
       {/* Filter Tabs - Mobile scrollable */}
@@ -243,9 +253,11 @@ export default function Orders() {
             title="No orders found"
             description="Create your first order to get started"
             action={
-              <Button onClick={handleOpenModal}>
-                Create Order
-              </Button>
+              hasPermission(PERMISSIONS.EDIT_ORDERS) && ( // Phase 6 addition
+                <Button onClick={handleOpenModal}>
+                  Create Order
+                </Button>
+              ) // Phase 6 addition
             }
           />
         }

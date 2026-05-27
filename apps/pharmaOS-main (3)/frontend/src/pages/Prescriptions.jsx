@@ -1,3 +1,4 @@
+// Phase 6 - Page Permissions
 import { useState, useEffect } from "react";
 import { FileText, CheckCircle, XCircle } from "lucide-react";
 import PageWrapper from "../components/layout/PageWrapper";
@@ -13,6 +14,8 @@ import { usePrescriptions } from "../hooks/usePrescriptions";
 import { prescriptionsApi, productsApi } from "../services/api";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDate } from "../utils/formatDate";
+import { usePermissions } from "../hooks/usePermissions"; // Phase 6 addition
+import { PERMISSIONS } from "../config/permissions"; // Phase 6 addition
 
 const statusTabs = [
   { value: "", label: "All" },
@@ -56,6 +59,7 @@ export default function Prescriptions() {
   const [verifying, setVerifying] = useState(false);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const { hasPermission } = usePermissions(); // Phase 6 addition
 
   const { prescriptions, loading, error, refetch } = usePrescriptions({
     status: statusFilter || undefined,
@@ -336,12 +340,12 @@ export default function Prescriptions() {
       header: "Actions",
       render: (row) => (
         <div className="flex gap-2">
-          {row.status === "under_review" && (
+          {row.status === "under_review" && hasPermission(PERMISSIONS.VERIFY_PRESCRIPTIONS) && ( // Phase 6 addition
             <Button size="sm" onClick={() => handleOpenModal(row)}>
               Verify
             </Button>
-          )}
-          {row.status !== "under_review" && (
+          )} {/* Phase 6 addition */}
+          {row.status !== "under_review" && hasPermission(PERMISSIONS.EDIT_ORDERS) && ( // Phase 6 addition
             <Button
               size="sm"
               variant="secondary"
@@ -349,7 +353,7 @@ export default function Prescriptions() {
             >
               Edit
             </Button>
-          )}
+          )} {/* Phase 6 addition */}
           {row.files && row.files.length > 0 && (
             <Button
               size="sm"
@@ -365,28 +369,30 @@ export default function Prescriptions() {
             </Button>
           )}
           {/* Quick reject action */}
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={async (e) => {
-              e.stopPropagation();
-              const ok = window.confirm(
-                "Are you sure you want to reject this prescription?",
-              );
-              if (!ok) return;
-              try {
-                await prescriptionsApi.updateStatus(row.id, {
-                  status: "rejected",
-                });
-                toast.success("Prescription rejected");
-                refetch();
-              } catch (err) {
-                toast.error(err.message || "Failed to reject prescription");
-              }
-            }}
-          >
-            Reject
-          </Button>
+          {hasPermission(PERMISSIONS.VERIFY_PRESCRIPTIONS) && ( // Phase 6 addition
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={async (e) => {
+                e.stopPropagation();
+                const ok = window.confirm(
+                  "Are you sure you want to reject this prescription?",
+                );
+                if (!ok) return;
+                try {
+                  await prescriptionsApi.updateStatus(row.id, {
+                    status: "rejected",
+                  });
+                  toast.success("Prescription rejected");
+                  refetch();
+                } catch (err) {
+                  toast.error(err.message || "Failed to reject prescription");
+                }
+              }}
+            >
+              Reject
+            </Button>
+          )} {/* Phase 6 addition */}
         </div>
       ),
     },
@@ -931,14 +937,16 @@ export default function Prescriptions() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  loading={verifying}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  <CheckCircle size={16} />
-                  Approve & Save
-                </Button>
+                {hasPermission(PERMISSIONS.VERIFY_PRESCRIPTIONS) && ( // Phase 6 addition
+                  <Button
+                    type="submit"
+                    loading={verifying}
+                    className="bg-teal-600 hover:bg-teal-700"
+                  >
+                    <CheckCircle size={16} />
+                    Approve & Save
+                  </Button>
+                )} {/* Phase 6 addition */}
               </div>
             </form>
           </div>

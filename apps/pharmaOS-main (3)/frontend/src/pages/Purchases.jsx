@@ -1,3 +1,4 @@
+// Phase 6 - Page Permissions
 import { useState, useCallback } from 'react'
 import { Plus, Search, ChevronDown, ChevronUp } from 'lucide-react'
 import { usePurchases, usePurchaseSummary } from '../hooks/usePurchases'
@@ -8,6 +9,8 @@ import PageWrapper from '../components/layout/PageWrapper'
 import Card from '../components/ui/Card'
 import { formatCurrency } from '../utils/formatCurrency'
 import { formatDate } from '../utils/formatDate'
+import { usePermissions } from '../hooks/usePermissions' // Phase 6 addition
+import { PERMISSIONS } from '../config/permissions' // Phase 6 addition
 
 export default function Purchases() {
   const { purchases, loading, error, refetch } = usePurchases()
@@ -25,6 +28,7 @@ export default function Purchases() {
     items: []
   })
   const [saving, setSaving] = useState(false)
+  const { hasPermission } = usePermissions() // Phase 6 addition
 
   const addItem = () => {
     setFormData({ ...formData, items: [...formData.items, { productId: '', quantity: 1, unitCost: 0 }] })
@@ -89,9 +93,11 @@ export default function Purchases() {
         subtitle="Stock purchases from suppliers"
         className="border-none shadow-sm mb-6"
         action={
-          <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors">
-            <Plus size={16} /> New Purchase
-          </button>
+          hasPermission(PERMISSIONS.EDIT_PURCHASES) && ( // Phase 6 addition
+            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-forty-primary text-white text-xs font-bold rounded hover:bg-forty-primary/90 transition-colors">
+              <Plus size={16} /> New Purchase
+            </button>
+          ) // Phase 6 addition
         }
       >
         <div className="mb-6">
